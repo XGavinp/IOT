@@ -1,0 +1,24 @@
+const int pinTemp = 34;    // Analog pin connected to the temperature sensor
+const int pinPIR = 27;     // Digital pin connected to the PIR motion sensor
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pinPIR, INPUT);   // Set the pin connected to the PIR sensor as an input
+}
+
+void loop() {
+  int tempReading = analogRead(pinTemp);    // Read the analog pin for temperature
+  float temp = (tempReading / 4095.0) * 3300 / 10.0;   // Convert analog reading to Celsius
+  
+  Serial.print("Temperature: ");
+  Serial.print(temp);
+  Serial.println("C");  // Print the temperature
+  
+  if (digitalRead(pinPIR) == HIGH) {
+    Serial.println("Motion detected!"); // Print motion detection message
+  } else {
+    Serial.println("No motion detected."); // Print no motion detection message
+  }
+  
+  delay(5000);  // Wait for 5 seconds before checking again
+}
