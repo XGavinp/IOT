@@ -1,0 +1,28 @@
+// Define pin numbers
+const int PIR_PIN = 34;    // PIR sensor output pin
+const int RELAY_PIN = 2;   // Relay control pin for the light bulb
+
+void setup() {
+  pinMode(PIR_PIN, INPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+  Serial.begin(9600); // Initialize serial communication
+}
+
+void loop() {
+  // Read the state of the PIR sensor
+  int pirState = digitalRead(PIR_PIN);
+  
+  // Check if motion is detected
+  if (pirState == HIGH) {
+    // Motion detected, turn off the light bulb
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("Motion detected. Light turned off.");
+  } else {
+    // No motion detected, turn on the light bulb
+    digitalWrite(RELAY_PIN, HIGH);
+    Serial.println("No motion detected! Light turned on.");
+    delay(200); // Brief delay to avoid rapid flickering
+  }
+  
+  delay(1); // Adjust delay as needed to control sensitivity
+}
