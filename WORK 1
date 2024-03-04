@@ -1,0 +1,51 @@
+#include <DHT.h>
+
+#define DHT_PIN 13        // Pin connected to the DHT sensor
+#define DHT_TYPE DHT11    // DHT sensor type (DHT11 or DHT22)
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+const int PIR_PIN = 34;    // PIR sensor output pin
+const int RELAY_PIN = 2;   // Relay control pin for the light bulb
+
+void setup() {
+  pinMode(PIR_PIN, INPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+  Serial.begin(9600); // Initialize serial communication
+  dht.begin();
+}
+
+void loop() {
+  // Read the state of the PIR sensor
+  int pirState = digitalRead(PIR_PIN);
+  
+  // Check if motion is detected
+  if (pirState == HIGH) {
+    // Motion detected, turn on the light bulb
+    digitalWrite(RELAY_PIN, HIGH);
+    Serial.println("Motion detected! Light turned on.");
+
+    // Read temperature and humidity
+    float temperature = dht.readTemperature(); // Read temperature in Celsius
+    float humidity = dht.readHumidity();       // Read humidity
+
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(temperature) || isnan(humidity)) {
+      Serial.println("Failed to read from DHT sensor!");
+      return;
+    }
+
+    Serial.print("Temperature: ");
+    Serial.print(temperature);
+    Serial.print(" °C, Humidity: ");
+    Serial.print(humidity);
+    Serial.println("%");
+  } else {
+    // No motion detected, turn off the light bulb
+    digitalWrite(RELAY_PIN, LOW);
+    Serial.println("No motion detected. Light turned off.");
+    delay(200); // Brief delay to avoid rapid flickering
+  }
+
+  delay(200); // Adjust delay as needed
+}
