@@ -1,0 +1,80 @@
+#include <DHT.h>
+
+#define DHT_PIN 13        // Pin connected to the DHT sensor
+#define DHT_TYPE DHT11    // DHT sensor type (DHT11 or DHT22)
+
+DHT dht(DHT_PIN, DHT_TYPE);
+
+const int PIR_PIN = 34;      // PIR sensor output pin
+const int RED_LED_PIN = 2;   // Red LED pin
+const int GREEN_LED_PIN = 3; // Green LED pin
+const int FAN_PIN = 4;       // Relay control pin for the fan
+const float TEMP_THRESHOLD = 25.0; // Temperature threshold in Celsius to turn on the fan
+
+bool motionDetected = false;
+unsigned long lastMotionTime = 0;
+
+void setup() {
+  pinMode(PIR_PIN, INPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(FAN_PIN, OUTPUT);
+  Serial.begin(9600); // Initialize serial communication
+  dht.begin();
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+  unsigned long elapsedTime = currentTime - lastMotionTime;
+
+  if (motionDetected && elapsedTime >= 20000) {
+    // If motion was detected and 20 seconds have passed, resume motion detection
+    motionDetected = false;
+  }
+
+  int pirState = digitalRead(PIR_PIN);
+
+  if (pirState == HIGH && !motionDetected) {
+    // Motion detected
+    motionDetected = true;
+    lastMotionTime = currentTime;
+    digitalWrite(RED_LED_PIN, LOW); // Turn off red LED
+    digitalWrite(GREEN_LED_PIN, HIGH); // Turn on green LED
+    Serial.println("Motion detected! Green LED turned on.");
+
+    // Read temperature and humidity continuously until 20 seconds have passed
+    while (elapsedTime < 20000) {
+      float temperature = dht.readTemperature(); // Read temperature in Celsius
+
+      if (!isnan(temperature)) {
+        Serial.print("Temperature: ");
+        Serial.print(temperature);
+        Serial.println(" °C");
+
+        // Check if temperature exceeds threshold to turn on the fan
+        if (temperature > TEMP_THRESHOLD) {
+          digitalWrite(FAN_PIN, HIGH); // Turn on the fan
+          Serial.println("Temperature exceeds threshold. Fan turned on.");
+        } else {
+          digitalWrite(FAN_PIN, LOW); // Turn off the fan
+        }
+      } else {
+        Serial.println("Failed to read temperature from DHT sensor!");
+      }
+
+      // Update current time and elapsed time
+      currentTime = millis();
+      elapsedTime = currentTime - lastMotionTime;
+    }
+
+    // After 20 seconds, turn off green LED
+    digitalWrite(GREEN_LED_PIN, LOW);
+  } else {
+    // No motion detected or motion detection paused
+    digitalWrite(GREEN_LED_PIN, LOW); // Turn off green LED
+    digitalWrite(RED_LED_PIN, HIGH); // Turn on red LED
+    Serial.println("No motion detected! Red LED turned on.");
+  }
+
+  delay(100); // Adjust delay as needed
+}
